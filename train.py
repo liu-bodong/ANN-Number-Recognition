@@ -11,23 +11,26 @@ from torch import optim
 import numpy as np
 
 if __name__ == '__main__':
-    print("training started")
+    print("training...")
     to_tensor = transforms.Compose([transforms.ToTensor()])
     data_set = MNIST("", True, transform=to_tensor, download=True)
-    train_data_loader = DataLoader(data_set, batch_size=16, shuffle=True)
+    train_data_loader = DataLoader(data_set, batch_size=8, shuffle=True)
+    print("train data size:", len(train_data_loader.dataset))
 
-    model = Network()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("device:", device)
+
+    model = Network().to(device)
     optimizer = optim.Adam(model.parameters())  
     criterion = nn.CrossEntropyLoss() 
-
-    print("data loaded")
-
-    for epoch in range(10):
+    for epoch in range(5):
         losses = torch.zeros(0)
         for batch_id, (x, y) in enumerate(train_data_loader):
+            x = x.to(device)
+            y = y.to(device)
             optimizer.zero_grad()
             x = x.view(-1, 784)
-            pred_y = model.foward(x)
+            pred_y = model.forward(x)
             loss = criterion(pred_y, y)
             loss.backward()
             optimizer.step()
