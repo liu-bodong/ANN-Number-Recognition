@@ -1,5 +1,6 @@
 import torch
 from model import Network
+from test import evaluate
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -10,21 +11,18 @@ from torch.utils.data import DataLoader
 from torch import optim
 import numpy as np
 
-if __name__ == '__main__':
-    print("training...")
-    to_tensor = transforms.Compose([transforms.ToTensor()])
-    data_set = MNIST("", True, transform=to_tensor, download=True)
-    train_data_loader = DataLoader(data_set, batch_size=8, shuffle=True)
-    print("train data size:", len(train_data_loader.dataset))
-
+def train(debug=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("device:", device)
+    print(f"device: {device}")
+    
+    to_tensor = transforms.Compose([transforms.ToTensor()])
+    train_data_set = MNIST("", True, transform=to_tensor, download=True)
+    train_data_loader = DataLoader(train_data_set, batch_size=64, shuffle=True)
 
     model = Network().to(device)
     optimizer = optim.Adam(model.parameters())  
     criterion = nn.CrossEntropyLoss() 
-    for epoch in range(5):
-        losses = torch.zeros(0)
+    for epoch in range(20):
         for batch_id, (x, y) in enumerate(train_data_loader):
             x = x.to(device)
             y = y.to(device)
@@ -34,13 +32,18 @@ if __name__ == '__main__':
             loss = criterion(pred_y, y)
             loss.backward()
             optimizer.step()
-            losses = torch.cat((losses, loss.detach().unsqueeze(0)), 0)
-        mean_loss = np.mean(losses.detach().numpy())
-        # print(f'epoch={epoch}, mean loss={mean_loss}')
-        # evaluate
-        # print(f'epoch={epoch}, accuracy={}')
+            if debug and batch_id == 0 and epoch % 10 == 0:
+                print(f'epoch: {epoch}, batch id: {batch_id}, loss: {loss.item()}')
+                # acc = evaluate(model, train_data_loader)
+                # print(f'epoch: {epoch}, batch id: {batch_id}, acc: {acc:.4f}')
+            
+    return model
 
-    torch.save(model.state_dict(), 'mnist.pth')
+if __name__ == '__main__':
+    print("training...")
+    trained_model = train(debug=False)
+
+    torch.save(trained_model.state_dict(), 'mnist.pth')
 
 
 
