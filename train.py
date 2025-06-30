@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from torchvision import datasets
 from torch.utils.data import DataLoader
 from torch import optim
+from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 
 if __name__ == '__main__':
